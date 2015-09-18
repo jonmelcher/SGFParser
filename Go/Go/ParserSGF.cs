@@ -1,53 +1,36 @@
-﻿// ************************************************************************
-// ParserSGF - Used for creating a TreeSGF from an SGF format source string
-//
-// Written by Jonathan Melcher
-// Feb 15, 2015
-// ************************************************************************
-
-#region using directives
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 
-#endregion
-
-namespace Parser_SGF
+namespace Go
 {
     // ******************************************************************************************
     // ParserSGF class -    Contains methods and helper functions for extracting data from an SGF
     //                      file into a TreeSGF object, based on the keyword lists provided.
     // ******************************************************************************************
-    public class ParserSGF
+    public static class ParserSGF
     {
-        #region keyword lists
-
-        public static readonly List<string> p_Root = new List<string>
-        { "GM", "SZ", "BR", "GN", "PB", "PW", "RE", "WR", "KO"};
-        public static readonly List<string> p_Move = new List<string>
-        { "B", "W" };
-        public static readonly List<string> p_Plce = new List<string>
-        { "CR", "MA", "SQ", "TR" };
-        public static readonly List<string> p_Annt = new List<string>
-        { "C" };
-
-        #endregion
-        #region parser methods
+        public static readonly List<string> p_Root = new List<string> { "GM", "SZ", "BR", "GN", "PB", "PW", "RE", "WR", "KO" };
+        public static readonly List<string> p_Move = new List<string> { "B", "W" };
+        public static readonly List<string> p_Plce = new List<string> { "CR", "MA", "SQ", "TR" };
+        public static readonly List<string> p_Annt = new List<string> { "C" };
 
         // Wrapper for parsing from a string of raw SGF data - outside game trees are split apart
         // and then parsed into TreeSGF objects, merged into an empty TreeSGF object.
         public static TreeSGF Parse(string source)
         {
             TreeSGF tree = new TreeSGF(new NodeSGF());
-
             List<string> outsideTrees = GetOutsideGameTrees(source);
+
             foreach (string ot in outsideTrees)
             {
-                tree.Root.Children.Add(ParseTree(ot).Root);
-                tree.Root.Children.Last().Parent = tree.Root;
+                TreeSGF parsedOT = ParseTree(ot);
+                parsedOT.Root.Parent = tree.Root;
+                tree.Root.Children.Add(parsedOT.Root);
             }
+
             return tree;
         }
 
@@ -66,13 +49,13 @@ namespace Parser_SGF
                         keyword = "";
                         baseTree.AddAtCursor(new NodeSGF(), true);
                         break;
-                    case '[':                        
-                        if (keyword.Trim() == "" && baseTree.cursor.Data.Count != 0)
-                            keyword = baseTree.cursor.Data.Last().Item1;
+                    case '[':
+                        if (keyword.Trim() == "" && baseTree.Cursor.SGFProperties.Count != 0)
+                            keyword = baseTree.Cursor.SGFProperties.Last().Item1;
                         else if (keyword.Trim() == "")
                             throw new ArgumentException("Invalid tree source");
                         string markup = GetMarkup(treeData.Substring(i));
-                        baseTree.cursor.Data.Add(Tuple.Create(keyword.Trim(), markup));
+                        baseTree.Cursor.SGFProperties.Add(Tuple.Create(keyword.Trim(), markup));
                         keyword = "";
                         i += markup.Length - 1;
                         break;
@@ -88,13 +71,10 @@ namespace Parser_SGF
                         keyword += treeData[i];
                         break;
                 }
-                i++;
+                ++i;
             }
             return baseTree;
         }
-
-        #endregion
-        #region tree parsing subroutines
 
         // Method for splitting raw SGF data into its different game trees
         private static List<string> GetOutsideGameTrees(string source)
@@ -117,7 +97,7 @@ namespace Parser_SGF
                     outsideTrees.Add(outsideTree);
                     i += treeLength - 1;
                 }
-                i++;
+                ++i;
             }
             return outsideTrees;
         }
@@ -160,14 +140,11 @@ namespace Parser_SGF
                         gameTree += source[i];
                         break;
                 }
-                i++;
+                ++i;
             }
             length = gameTree.Length;
             return gameTree;
         }
-
-        #endregion
-        #region helper functions
 
         // Method for retrieving contents from a [ ] markup.  All data in SGF is given
         // in the form "keyword[data]".  Escape sequences must be considered.
@@ -181,76 +158,68 @@ namespace Parser_SGF
                 (x, x_i) => x != ']' || (x == ']' && markup[x_i - 1] == '\\'))) + "]";
         }
 
-        // Method for extracting a Tuple<moveState, int, int> struct from parsed 'movement' data
-        public static List<Tuple<GoLogic.moveState, int, int>> GetMovesFromData(string keyword, string data)
+        // Method for extracting a GoMove struct from parsed 'movement' data
+        private static List<GoMove> GetMovesFromData(string keyword, string data)
         {
             string alphabet = "abcdefghijklmnopqrstuvwxyz";
-            GoLogic.moveState moveColour = GetMoveStateFromKeyword(keyword);
-            List<Tuple<GoLogic.moveState, int, int>> moves = new List<Tuple<GoLogic.moveState, int, int>>();
+            GoColour moveColour = GetMoveStateFromKeyword(keyword);
+            List<GoMove> moves = new List<GoMove>();
 
             switch (data.Length)
             {
-                // Move is a pass
-                case 0:
-                    moves.Add(Tuple.Create(moveColour, -1, -1));
+                case 0:     // move is a pass
+                    moves.Add(new GoMove(-1, -1, moveColour, MoveType.Pass));
                     break;
-                // Move is of form xy
-                case 2:
-                    moves.Add(Tuple.Create(moveColour, alphabet.IndexOf(data[0]), alphabet.IndexOf(data[1])));
+                case 2:     // move is of form xy
+                    moves.Add(new GoMove(
+                        alphabet.IndexOf(data[1]), alphabet.IndexOf(data[0]), moveColour, MoveType.Normal));
                     break;
-                // Move is of form xy : rs
-                case 5:
+                case 5:     // move is of form xy : rs
                     string[] args = data.Split(':');
                     args[0] = args[0].Trim();
-                    args[1] = args[0].Trim();
-                    for (int j = alphabet.IndexOf(args[0][1]); j <= alphabet.IndexOf(args[1][1]); j++)
-                        for (int i = alphabet.IndexOf(args[0][0]); i <= alphabet.IndexOf(args[1][0]); i++)
-                            moves.Add(Tuple.Create(moveColour, i, j));
+                    args[1] = args[1].Trim();
+                    for (int j = alphabet.IndexOf(args[0][1]); j <= alphabet.IndexOf(args[1][1]); ++j)
+                        for (int i = alphabet.IndexOf(args[0][0]); i <= alphabet.IndexOf(args[1][0]); ++i)
+                            moves.Add(new GoMove(j, i, moveColour, MoveType.Placement));
                     break;
             }
+
             return moves;
         }
 
         public static void ExtractDataFromNodes(TreeSGF tree)
         {
-            tree.MapDFS(x =>
+            tree.ActDFS(x =>
+            {
+                foreach (Tuple<string, string> property in x.SGFProperties)
                 {
-                    x.ClearExtractedData();
-                    foreach (Tuple<string, string> property in x.Data)
-                    {
-                        string value = property.Item2.Substring(1, property.Item2.Length - 2).Trim();
-                        if (ParserSGF.p_Root.Contains(property.Item1))
-                            tree.Root.RootProperties[property.Item1] = value;
-                        else if (ParserSGF.p_Plce.Contains(property.Item1))
-                            x.Placement.AddRange(ParserSGF.GetMovesFromData(property.Item1, value));
-                        else if (ParserSGF.p_Annt.Contains(property.Item1))
-                            x.Comment = value.Trim();
-                        else if (ParserSGF.p_Move.Contains(property.Item1))
-                        {
-                            x.Move = ParserSGF.GetMovesFromData(property.Item1, value)[0];
-                            x.IsMove = true;
-                        }
-                    }
-                });
+                    string value = property.Item2.Substring(1, property.Item2.Length - 2).Trim();
+                    if (ParserSGF.p_Root.Contains(property.Item1))
+                        tree.Root.RootProperties[property.Item1] = value;
+                    else if (ParserSGF.p_Plce.Contains(property.Item1))
+                        x.Placement.AddRange(ParserSGF.GetMovesFromData(property.Item1, value));
+                    else if (ParserSGF.p_Annt.Contains(property.Item1))
+                        x.Comment = value.Trim();
+                    else if (ParserSGF.p_Move.Contains(property.Item1))
+                        x.Move = ParserSGF.GetMovesFromData(property.Item1, value)[0];
+                }
+            });
         }
 
         // Method for converting keyword to moveState
-        public static GoLogic.moveState GetMoveStateFromKeyword(string keyword)
+        public static GoColour GetMoveStateFromKeyword(string keyword)
         {
             switch (keyword)
             {
                 case "B":
                 case "AB":
-                    return GoLogic.moveState.Black;
+                    return GoColour.Black;
                 case "W":
                 case "AW":
-                    return GoLogic.moveState.White;
-                case "AE":
+                    return GoColour.White;
                 default:
-                    return GoLogic.moveState.None;
+                    return GoColour.None;
             }
         }
-
-        #endregion
     }
 }

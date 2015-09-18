@@ -1,5 +1,0 @@
-C:\Users\Jonathan\Desktop\NAIT\C#\Parser_SGF\Parser_SGF\bin\Debug\Parser_SGF.dll
-C:\Users\Jonathan\Desktop\NAIT\C#\Parser_SGF\Parser_SGF\bin\Debug\Parser_SGF.pdb
-C:\Users\Jonathan\Desktop\NAIT\C#\Parser_SGF\Parser_SGF\obj\Debug\Parser_SGF.csprojResolveAssemblyReference.cache
-C:\Users\Jonathan\Desktop\NAIT\C#\Parser_SGF\Parser_SGF\obj\Debug\Parser_SGF.dll
-C:\Users\Jonathan\Desktop\NAIT\C#\Parser_SGF\Parser_SGF\obj\Debug\Parser_SGF.pdb

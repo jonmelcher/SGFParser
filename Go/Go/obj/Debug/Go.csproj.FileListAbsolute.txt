@@ -1,0 +1,15 @@
+C:\Users\JMelcher\Desktop\Go\Go\bin\Debug\Go.dll
+C:\Users\JMelcher\Desktop\Go\Go\bin\Debug\Go.pdb
+C:\Users\JMelcher\Desktop\Go\Go\obj\Debug\Go.csprojResolveAssemblyReference.cache
+C:\Users\JMelcher\Desktop\Go\Go\obj\Debug\Go.dll
+C:\Users\JMelcher\Desktop\Go\Go\obj\Debug\Go.pdb
+C:\Users\jmelcher1\Desktop\Go\Go\bin\Debug\Go.dll
+C:\Users\jmelcher1\Desktop\Go\Go\bin\Debug\Go.pdb
+C:\Users\jmelcher1\Desktop\Go\Go\obj\Debug\Go.csprojResolveAssemblyReference.cache
+C:\Users\jmelcher1\Desktop\Go\Go\obj\Debug\Go.dll
+C:\Users\jmelcher1\Desktop\Go\Go\obj\Debug\Go.pdb
+C:\Users\jmelcher1\Desktop\Go2\Go\bin\Debug\Go.dll
+C:\Users\jmelcher1\Desktop\Go2\Go\bin\Debug\Go.pdb
+C:\Users\jmelcher1\Desktop\Go2\Go\obj\Debug\Go.csprojResolveAssemblyReference.cache
+C:\Users\jmelcher1\Desktop\Go2\Go\obj\Debug\Go.dll
+C:\Users\jmelcher1\Desktop\Go2\Go\obj\Debug\Go.pdb
